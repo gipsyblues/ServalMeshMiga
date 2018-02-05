@@ -1191,7 +1191,7 @@ public class Control extends Service {
      	}
      	//WriteLog.appendLog("Control.java/應用程式開啟");
      	//WriteLog.appendLog("Control.java/應用程式開啟123456");
-     	
+     	//
      	//getBatteryCapacity();
      	//Log.d("Miga", "record_set:"+record_set.size());
      	
