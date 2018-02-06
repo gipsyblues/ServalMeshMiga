@@ -186,9 +186,13 @@ public class Control extends Service {
 //Miga
 	private int power_level = 0;
 	private int peercount, InfoChangeTime =0;
+	private boolean writeLog=false;
+	private int ExpDeviceNum=3;//目前要測試的裝置數量,有2-6隻
 	private String GO_mac;
 	private Thread initial = null;
 	private Map<String, Map> record_set = new HashMap<String, Map>();
+    private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
+    private WifiP2pDeviceList peerList;
 	
     // </aqua0722>
     public void onNetworkStateChanged() {
@@ -393,6 +397,11 @@ public class Control extends Service {
 				//String thisTimeMAC = record.get("MAC").toString();//record是對方的服務內容（在discovery Service時指定了record=re_record）
 				while (collect_num > 0) {
 					record_set.put(record.get("SSID").toString(), record);//將蒐集到的其他裝置的服務根據SSID存放個別的服務
+                    if(CanWriteLogFiles()&&(!writeLog)&&record_set.size()==(ExpDeviceNum-1)) {//ExpDeviceNum為目前參與實驗的裝置數量, writelog為false表示還沒寫過log file
+                        WriteLog.appendLog("WiFi_Connect/參與實驗裝置數:"+ExpDeviceNum+"更新服務次數:"+InfoChangeTime+"sleep time:"+sleep_time+"\r\n",WiFiApName);
+                        Log.d("Miga", "WiFi_Connect/參與實驗裝置數:"+ExpDeviceNum+"更新服務次數:"+InfoChangeTime+"sleep time:"+sleep_time);
+                        writeLog=true;
+                    }
 					Thread.sleep(100);
 					collect_num--;
 					//Log.d("Miga", " collect_num : " + collect_num);
@@ -593,6 +602,7 @@ public class Control extends Service {
     }
 
     private void startRegistration() {
+
     	InfoChangeTime+=1;//加入新的資訊並交換過得次數
     	Log.d("Miga", "InfoChangeTime"+InfoChangeTime);
         record_re = new HashMap();
@@ -1185,14 +1195,13 @@ public class Control extends Service {
         //Miga
         start_time=0;
         this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        this.registerReceiver(this.mPeerInfoReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION));//Receiver，當peer數量改變時則近來，WIFI_P2P_PEERS_CHANGED_ACTION
         // Get Go Info
      	if (initial == null) {
      		initial = new Initial();
      		initial.start();
      	}
-     	//if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1)// 現在SDK版本 < 22的話則進入寫LOG , 只有Android 5.0.2版本可以成功寫log : 818b, f418, 3c06
-     	//    WriteLog.appendLog("Control.java/Control開啟"+"\r\n");
-     	//getBatteryCapacity();
+        //getBatteryCapacity();
      	//Log.d("Miga", "record_set:"+record_set.size());
      	
     }
@@ -1204,6 +1213,14 @@ public class Control extends Service {
 			power_level = level;
 		}
 	};
+    //Miga for peer change
+    private BroadcastReceiver mPeerInfoReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context ctxt, Intent intent) {
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
+            power_level = level;
+        }
+    };
 	//Miga 
     public void getBatteryCapacity() {
     	Object mPowerProfile_ = null;
@@ -1270,9 +1287,39 @@ public class Control extends Service {
 			
 		  }
 	}
-    
-	
-	
+    //Miga 判斷這支手機的android版本能不能寫入Log Files
+	public boolean CanWriteLogFiles(){
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1)// 現在SDK版本 < 22的話則進入寫LOG , 只有Android 5.0.2版本可以成功寫log : 818b, f418, 3c06
+            return true;
+        else
+            return false;
+    }
+
+    public void peerdiscover(){
+        manager.stopPeerDiscovery(channel,new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d("Miga", "stopPeerDiscovery onSuccess");
+                manager.discoverPeers(channel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.d("Miga", "discoverPeers onSuccess");
+                    }
+
+                    @Override
+                    public void onFailure(int reasonCode) {
+                        Log.d("Miga", "discoverPeers onFailure");
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(int reasonCode) {
+                Log.d("Miga", "stopPeerDiscovery onFailure");
+            }
+        });
+    }
+
 	@Override
     public void onDestroy() {
         Log.d("Leaf1110", "Control Services Destroy");

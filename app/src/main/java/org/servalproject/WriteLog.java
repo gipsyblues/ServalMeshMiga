@@ -24,11 +24,12 @@ import android.util.Log;
  */
 public class WriteLog
 {
-    public static void appendLog(String text)
+    public static void appendLog(String text,String DeviceWiFiApName)
     {
     	//File logFile = new File("/data/"+getDate()+".txt");
     	//File logFile = new File("/mnt/shell/emulated/0/"+getDate()+".txt");
-        File logFile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile()+"/MigaLog/", getDate()+".txt");//實際位置:/mnt/shell/emulated/0/, For Android 5.0.1成功
+        String LastFourName=DeviceWiFiApName.substring(DeviceWiFiApName.length()-4);//取後方4個字, e.g. f418
+        File logFile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile()+"/MigaLog/", getDate()+"_"+LastFourName+".txt");//實際位置:/mnt/shell/emulated/0/, For Android 5.0.1成功
        // context.
         //File appDirectory = new File(  Environment.getDataDirectory() + "/ServalMeshLog" );
        // File logDirectory = new File( appDirectory + "/log" );
