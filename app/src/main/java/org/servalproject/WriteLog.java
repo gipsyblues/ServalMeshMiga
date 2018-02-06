@@ -16,6 +16,11 @@ import android.util.Log;
  * 如果ddms內的data打不開則需要到terminal輸入指令: adb shell su -c "chmod 777 /data"
  * 如果解除data資料夾內的檔案的權限,則需要輸入指令: adb shell su -c "chmod 777 /data/log file name.txt"
  * 如果要拉出data資料夾內的檔案到桌面,則需要輸入指令:adb pull /data/log file name.txt ~/桌面
+ * New 20180206 上述那些不需要打了
+ * 請在乎叫此function前先判斷Android SDK版本，目前只有寫Android 5.0.2可以進入此Fuction
+ * 手機: f418 , 818b , 3c06
+ * if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1)// 現在SDK版本 < 22的話則進入寫LOG , 只有Android 5.0.2版本可以成功寫log : 818b, f418, 3c06
+ *   WriteLog.appendLog("Control.java/Control開啟"+"\r\n");
  */
 public class WriteLog
 {
@@ -23,7 +28,7 @@ public class WriteLog
     {
     	//File logFile = new File("/data/"+getDate()+".txt");
     	//File logFile = new File("/mnt/shell/emulated/0/"+getDate()+".txt");
-        File logFile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), getDate()+".txt");//實際位置:/mnt/shell/emulated/0/, For Android 5.0.1成功
+        File logFile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile()+"/MigaLog/", getDate()+".txt");//實際位置:/mnt/shell/emulated/0/, For Android 5.0.1成功
        // context.
         //File appDirectory = new File(  Environment.getDataDirectory() + "/ServalMeshLog" );
        // File logDirectory = new File( appDirectory + "/log" );

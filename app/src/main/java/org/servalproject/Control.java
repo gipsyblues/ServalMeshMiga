@@ -30,6 +30,7 @@ import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.text.format.Time;
@@ -1189,7 +1190,8 @@ public class Control extends Service {
      		initial = new Initial();
      		initial.start();
      	}
-     	//WriteLog.appendLog("Control.java/Control開啟");
+     	//if(Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP_MR1)// 現在SDK版本 < 22的話則進入寫LOG , 只有Android 5.0.2版本可以成功寫log : 818b, f418, 3c06
+     	//    WriteLog.appendLog("Control.java/Control開啟"+"\r\n");
      	//getBatteryCapacity();
      	//Log.d("Miga", "record_set:"+record_set.size());
      	
