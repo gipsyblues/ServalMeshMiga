@@ -60,6 +60,8 @@
     <uses-permission android:name="net.commotionwireless.meshtether.CHANGE_STATE"/>
 
     <!--  android permissions -->
+	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"></uses-permission>
     
     <uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>

@@ -9,6 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 import android.os.Environment;
+import android.util.Log;
 
 /**
  * Created by Miga on 2018/02/04.
@@ -21,12 +22,12 @@ public class WriteLog
     public static void appendLog(String text)
     {
     	//File logFile = new File("/data/"+getDate()+".txt");
-    	File logFile = new File("/data/"+getDate()+".txt");
-    	
+    	//File logFile = new File("/mnt/shell/emulated/0/"+getDate()+".txt");
+        File logFile = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), getDate()+".txt");//實際位置:/mnt/shell/emulated/0/, For Android 5.0.1成功
        // context.
         //File appDirectory = new File(  Environment.getDataDirectory() + "/ServalMeshLog" );
        // File logDirectory = new File( appDirectory + "/log" );
-       // File logFile = new File( Environment.getDataDirectory().getAbsoluteFile(), "logcat" +getDate()+".txt" );
+       //File logFile = new File( Environment.getDataDirectory().getAbsoluteFile(), "logcat" +getDate()+".txt" );
     	/* File appDirectory = new File( "sdcard/ServalMeshLog" );
          File logDirectory = new File( appDirectory + "/log" );
          File logFile = new File( logDirectory, "logcat" + getDate() + ".txt" );
@@ -60,6 +61,7 @@ public class WriteLog
             buf.append(getDateTime()+"  "+text);
             buf.newLine();
             buf.close();
+            Log.d("Miga","Write Log File Success:"+text);
         }
         catch (IOException e)
         {
