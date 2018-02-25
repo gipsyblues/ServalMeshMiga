@@ -185,7 +185,7 @@ public class Control extends Service {
 
 //Miga
 	private int power_level = 0;
-	private int peercount, InfoChangeTime =0;
+	private int peercount, InfoChangeTime,discoverpeernum =0;
 	private boolean writeLog=false;
 	private int ExpDeviceNum=3;//目前要測試的裝置數量,有2-6隻
 	private String GO_mac;
@@ -193,6 +193,7 @@ public class Control extends Service {
 	private Map<String, Map> record_set = new HashMap<String, Map>();
     private List<WifiP2pDevice> peers = new ArrayList<WifiP2pDevice>();
     private WifiP2pDeviceList peerList;
+    private BroadcastReceiver receiver_peer = null;
 	
     // </aqua0722>
     public void onNetworkStateChanged() {
@@ -604,15 +605,17 @@ public class Control extends Service {
     private void startRegistration() {
 
     	InfoChangeTime+=1;//加入新的資訊並交換過得次數
-    	Log.d("Miga", "InfoChangeTime"+InfoChangeTime);
+    	Log.d("Miga", "startRegistration/InfoChangeTime"+InfoChangeTime);
         record_re = new HashMap();
         //int peercount = count_peer();
-        peercount=record_set.size();//蒐集到周遭的info,初始值為0
-        try {
+        //peercount=record_set.size();//蒐集到周遭的info,初始值為0
+        peercount = discoverpeernum;//於listener接收到時會做更新
+        Log.d("Miga", "startRegistration/discoverpeernum"+discoverpeernum);
+        /*try {
             peerCount = ServalDCommand.peerCount();
         } catch (ServalDFailureException e) {
             e.printStackTrace();
-        }
+        }*/
         if (Cluster_Name == null) {
             Cluster_Name = WiFiApName;
         }
@@ -685,12 +688,17 @@ public class Control extends Service {
   							start_time = Calendar.getInstance().getTimeInMillis();
   							sleep_time = 0;
   							discoverService();
+                            //peerdiscover();
   						 }
                     	 if (STATE == StateFlag.ADD_SERVICE.getIndex()) {
                     		 s_status = "State: advertising service";
                              Log.d("Miga", "State: advertising service");
                              STATE = StateFlag.WAITING.getIndex();
                              startRegistration();
+                             // 一定要 sleep 否則無法觸發discovery_service_flag
+                             // 造成一直執行 add_service_flag
+                             //Thread.sleep(2000);
+                             //sleep_time = sleep_time + 2000;
                              //discoverService();
                          }
                          if (STATE == StateFlag.DISCOVERY_SERVICE.getIndex()) {
@@ -701,7 +709,7 @@ public class Control extends Service {
                              manager.stopPeerDiscovery(channel, new WifiP2pManager.ActionListener() {
                                  @Override
                                  public void onSuccess() {
-                                     //Log.d("Miga", "State: discovering service, stopPeerDiscovery onSuccess");
+                                     Log.d("Miga", "State: discovering service, stopPeerDiscovery onSuccess");
                                      manager.removeServiceRequest(channel, serviceRequest,
                                              new WifiP2pManager.ActionListener() {
                                                  @Override
@@ -714,7 +722,7 @@ public class Control extends Service {
                                                                              new WifiP2pManager.ActionListener() {
                                                                                  @Override
                                                                                  public void onSuccess() {
-                                                                                     //Log.d("Miga", "State: discovering service, discoverServices onSuccess");
+                                                                                     Log.d("Miga", "State: discovering service, discoverServices onSuccess");
                                                                                  }
 
                                                                                  @Override
@@ -1195,12 +1203,30 @@ public class Control extends Service {
         //Miga
         start_time=0;
         this.registerReceiver(this.mBatInfoReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        this.registerReceiver(this.mPeerInfoReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION));//Receiver，當peer數量改變時則近來，WIFI_P2P_PEERS_CHANGED_ACTION
+        //this.registerReceiver(this.mPeerInfoReceiver, new IntentFilter(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION));//Receiver，當peer數量改變時則近來，WIFI_P2P_PEERS_CHANGED_ACTION
         // Get Go Info
      	if (initial == null) {
      		initial = new Initial();
      		initial.start();
      	}
+        //peerdiscover();//註冊discoverPeers的ActionListener
+        registerReceiver(receiver_peer = new BroadcastReceiver() {//註冊用來接收peer discovery的peer數量變化的結果
+            @Override
+            public void onReceive(Context c, Intent intent) {
+                if (manager != null) {
+                    manager.requestPeers(channel, new WifiP2pManager.PeerListListener() {
+                        @Override
+                        public void onPeersAvailable(WifiP2pDeviceList peers) {
+                            Log.d("Miga",String.format("PeerListListener: %d peers available, updating device list", peers.getDeviceList().size()));
+                            discoverpeernum = peers.getDeviceList().size();//取得發現附近裝置的數量
+                            // DO WHATEVER YOU WANT HERE
+                            // YOU CAN GET ACCESS TO ALL THE DEVICES YOU FOUND FROM peers OBJECT
+
+                        }
+                    });
+                }
+            }
+        }, new IntentFilter(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION));
         //getBatteryCapacity();
      	//Log.d("Miga", "record_set:"+record_set.size());
      	
@@ -1213,14 +1239,6 @@ public class Control extends Service {
 			power_level = level;
 		}
 	};
-    //Miga for peer change
-    private BroadcastReceiver mPeerInfoReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context ctxt, Intent intent) {
-            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0);
-            power_level = level;
-        }
-    };
 	//Miga 
     public void getBatteryCapacity() {
     	Object mPowerProfile_ = null;
@@ -1294,7 +1312,7 @@ public class Control extends Service {
         else
             return false;
     }
-
+    //Miga for discoverPeers, 註冊discoverPeers的ActionListener
     public void peerdiscover(){
         manager.stopPeerDiscovery(channel,new WifiP2pManager.ActionListener() {
             @Override
