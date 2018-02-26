@@ -398,6 +398,8 @@ public class Control extends Service {
 				//String thisTimeMAC = record.get("MAC").toString();//record是對方的服務內容（在discovery Service時指定了record=re_record）
 				while (collect_num > 0) {
 					record_set.put(record.get("SSID").toString(), record);//將蒐集到的其他裝置的服務根據SSID存放個別的服務
+                    s_status="Receive record size:"+record_set.size();
+                    Log.d("Miga","WiFi_Connect/Receive record size:"+record_set.size());
                     if(CanWriteLogFiles()&&(!writeLog)&&record_set.size()==(ExpDeviceNum-1)) {//ExpDeviceNum為目前參與實驗的裝置數量, writelog為false表示還沒寫過log file
                         WriteLog.appendLog("WiFi_Connect/參與實驗裝置數:"+ExpDeviceNum+"更新服務次數:"+InfoChangeTime+"sleep time:"+sleep_time+"\r\n",WiFiApName);
                         Log.d("Miga", "WiFi_Connect/參與實驗裝置數:"+ExpDeviceNum+"更新服務次數:"+InfoChangeTime+"sleep time:"+sleep_time);
@@ -715,7 +717,7 @@ public class Control extends Service {
                                                  @Override
                                                  public void onSuccess() {
                                                      manager.addServiceRequest(channel, serviceRequest,
-                                                             new WifiP2pManager.ActionListener() {
+                                                             new WifiP2pManager.ActionListener() {// addServiceReauest(): create a service discovery request
                                                                  @Override
                                                                  public void onSuccess() {
                                                                      manager.discoverServices(channel,
@@ -757,8 +759,8 @@ public class Control extends Service {
                                  }
                              });
                              NumRound++;
-                             Thread.sleep(5000);
-                             sleep_time = sleep_time + 5;
+                             Thread.sleep(8000);
+                             sleep_time = sleep_time + 8;
                              STATE = StateFlag.ADD_SERVICE.getIndex();
                          }//End DISCOVERY_SERVICE
                        /* Log.d("Leaf0419", "STATE: " + STATE);
@@ -1209,7 +1211,7 @@ public class Control extends Service {
      		initial = new Initial();
      		initial.start();
      	}
-        //peerdiscover();//註冊discoverPeers的ActionListener
+
         registerReceiver(receiver_peer = new BroadcastReceiver() {//註冊用來接收peer discovery的peer數量變化的結果
             @Override
             public void onReceive(Context c, Intent intent) {
@@ -1312,7 +1314,7 @@ public class Control extends Service {
         else
             return false;
     }
-    //Miga for discoverPeers, 註冊discoverPeers的ActionListener
+    //Miga for discoverPeers, 在進行device彼此交換資料之前, 先去得到此裝置周圍裝置數量有幾個 (取得peer數)
     public void peerdiscover(){
         manager.stopPeerDiscovery(channel,new WifiP2pManager.ActionListener() {
             @Override
@@ -1443,6 +1445,8 @@ public class Control extends Service {
         // </aqua0722>
         new Task().execute(State.On);
         serviceRunning = true;
+
+        peerdiscover();//進行discoverPeers,一開始就先去搜尋附近有誰, Miga add 0226
         //STATE = StateFlag.WAITING.getIndex();
         return START_STICKY;
     }
